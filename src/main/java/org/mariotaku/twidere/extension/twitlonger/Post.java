@@ -26,4 +26,18 @@ public class Post {
     @JsonField(name = "content")
     public String content;
 
+    @Override
+    public String toString() {
+        return "Post{" +
+                "content='" + content + '\'' +
+                ", postTime='" + postTime + '\'' +
+                ", replyToId=" + replyToId +
+                ", shortUrl='" + shortUrl + '\'' +
+                ", screenName='" + screenName + '\'' +
+                ", fullUrl='" + fullUrl + '\'' +
+                ", id='" + id + '\'' +
+                ", twitterStatusId=" + twitterStatusId +
+                ", tweetContent='" + tweetContent + '\'' +
+                '}';
+    }
 }

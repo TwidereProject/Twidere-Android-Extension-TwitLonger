@@ -1,11 +1,6 @@
 package org.mariotaku.twidere.extension.twitlonger;
 
 import android.accounts.Account;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -25,8 +20,6 @@ import org.mariotaku.twidere.service.StatusShortenerService;
  */
 public class TwitLongerStatusShortenerService extends StatusShortenerService implements Constants {
 
-    private static final int NOTIFICATION_ID_REQUEST_PERMISSION = 1;
-
     /**
      * @return Shortened tweet.
      */
@@ -34,28 +27,6 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
     protected StatusShortenResult shorten(final ParcelableStatusUpdate status,
                                           final UserKey currentAccountKey,
                                           final String overrideStatusText) {
-        final int granted = Twidere.isPermissionGranted(this);
-        if (granted == Twidere.Permission.DENIED) {
-            return StatusShortenResult.error(-1, getString(R.string.permission_not_granted));
-        } else if (granted != Twidere.Permission.GRANTED) {
-            final NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            final Notification.Builder builder = new Notification.Builder(this);
-            builder.setSmallIcon(R.drawable.ic_stat_warning);
-            builder.setTicker(getString(R.string.permission_request));
-            builder.setContentTitle(getString(R.string.permission_is_required_to_shorten_status));
-            builder.setContentText(getString(R.string.app_name));
-            builder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this,
-                    RequestPermissionActivity.class), PendingIntent.FLAG_ONE_SHOT));
-            builder.setAutoCancel(true);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                nm.notify(NOTIFICATION_ID_REQUEST_PERMISSION, builder.build());
-            } else {
-                //noinspection deprecation
-                nm.notify(NOTIFICATION_ID_REQUEST_PERMISSION, builder.getNotification());
-            }
-            return StatusShortenResult.error(-1, getString(R.string.permission_not_granted));
-        }
         final AccountDetails details;
         try {
             details = getOAuthCredentials(currentAccountKey);

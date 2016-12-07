@@ -15,10 +15,6 @@
             android:name="org.mariotaku.twidere.extension"
             android:value="true"/>
 
-        <meta-data
-            android:name="org.mariotaku.twidere.extension.permissions"
-            android:value="accounts"/>
-
         <activity
             android:name=".TwitLongerReaderActivity"
             android:label="@string/extension_reader_name">
@@ -58,9 +54,6 @@
                     android:scheme="https"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".RequestPermissionActivity"
-            android:theme="@style/Theme.NoDisplay"/>
         <activity
             android:name=".AboutActivity"
             android:label="@string/about">
