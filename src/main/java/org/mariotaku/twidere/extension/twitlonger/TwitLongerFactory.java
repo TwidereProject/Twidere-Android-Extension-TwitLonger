@@ -10,11 +10,12 @@ import org.mariotaku.restfu.http.Endpoint;
 import org.mariotaku.restfu.http.HttpRequest;
 import org.mariotaku.restfu.http.HttpResponse;
 import org.mariotaku.restfu.http.ValueMap;
+import org.mariotaku.restfu.oauth.OAuthAuthorization;
+import org.mariotaku.restfu.oauth.OAuthEndpoint;
+import org.mariotaku.restfu.oauth.OAuthToken;
 import org.mariotaku.restfu.urlconnection.URLConnectionRestClient;
-import org.mariotaku.twidere.api.twitter.auth.OAuthAuthorization;
-import org.mariotaku.twidere.api.twitter.auth.OAuthEndpoint;
-import org.mariotaku.twidere.api.twitter.auth.OAuthToken;
-import org.mariotaku.twidere.model.ParcelableCredentials;
+import org.mariotaku.twidere.model.AccountDetails;
+import org.mariotaku.twidere.model.account.cred.OAuthCredentials;
 
 
 /**
@@ -22,7 +23,7 @@ import org.mariotaku.twidere.model.ParcelableCredentials;
  */
 public class TwitLongerFactory {
 
-    public static TwitLonger getInstance(final String apiKey, @Nullable final ParcelableCredentials credentials) {
+    public static TwitLonger getInstance(final String apiKey, @Nullable final AccountDetails credentials) {
         final RestAPIFactory<TwitLongerException> factory = new RestAPIFactory<>();
         factory.setEndpoint(new Endpoint("http://api.twitlonger.com/"));
         factory.setHttpClient(new URLConnectionRestClient());
@@ -38,11 +39,12 @@ public class TwitLongerFactory {
         private final OAuthEndpoint mEndpoint;
         private final RestRequest mRequest;
 
-        public TwitLongerConstantPool(String apiKey, @Nullable ParcelableCredentials credentials) {
+        public TwitLongerConstantPool(String apiKey, @Nullable AccountDetails accountDetails) {
             mApiKey = apiKey;
-            if (credentials != null) {
-                final OAuthToken accessToken = new OAuthToken(credentials.oauth_token,
-                        credentials.oauth_token_secret);
+            if (accountDetails != null && accountDetails.credentials instanceof OAuthCredentials) {
+                final OAuthCredentials credentials = (OAuthCredentials) accountDetails.credentials;
+                final OAuthToken accessToken = new OAuthToken(credentials.access_token,
+                        credentials.access_token_secret);
                 mAuthorization = new OAuthAuthorization(credentials.consumer_key,
                         credentials.consumer_secret, accessToken);
                 mEndpoint = new OAuthEndpoint("https://api.twitter.com/1.1/");

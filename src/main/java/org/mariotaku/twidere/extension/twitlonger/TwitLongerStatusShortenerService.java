@@ -1,5 +1,6 @@
 package org.mariotaku.twidere.extension.twitlonger;
 
+import android.accounts.Account;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,8 +10,8 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.mariotaku.twidere.Twidere;
-import org.mariotaku.twidere.model.ParcelableAccount;
-import org.mariotaku.twidere.model.ParcelableCredentials;
+import org.mariotaku.twidere.annotation.AccountType;
+import org.mariotaku.twidere.model.AccountDetails;
 import org.mariotaku.twidere.model.ParcelableStatus;
 import org.mariotaku.twidere.model.ParcelableStatusUpdate;
 import org.mariotaku.twidere.model.StatusShortenResult;
@@ -25,7 +26,6 @@ import org.mariotaku.twidere.service.StatusShortenerService;
 public class TwitLongerStatusShortenerService extends StatusShortenerService implements Constants {
 
     private static final int NOTIFICATION_ID_REQUEST_PERMISSION = 1;
-
 
     /**
      * @return Shortened tweet.
@@ -56,19 +56,19 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
             }
             return StatusShortenResult.error(-1, getString(R.string.permission_not_granted));
         }
-        final ParcelableCredentials credentials;
+        final AccountDetails details;
         try {
-            credentials = getOAuthCredentials(currentAccountKey);
+            details = getOAuthCredentials(currentAccountKey);
         } catch (SecurityException e) {
             if (BuildConfig.DEBUG) {
                 Log.w(LOGTAG, e);
             }
             return StatusShortenResult.error(-1, getString(R.string.permission_not_granted));
         }
-        if (credentials == null || !isTwitter(credentials)) {
+        if (details == null || !isTwitter(details)) {
             return StatusShortenResult.error(-1, "No valid Twitter account found");
         }
-        final TwitLonger tl = TwitLongerFactory.getInstance(TWITLONGER_API_KEY, credentials);
+        final TwitLonger tl = TwitLongerFactory.getInstance(TWITLONGER_API_KEY, details);
         try {
             final String text;
             if (overrideStatusText != null) {
@@ -97,23 +97,23 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
         return StatusShortenResult.error(-1, "Unknown error");
     }
 
-    private boolean isTwitter(ParcelableCredentials credentials) {
-        return credentials.account_type == null || ParcelableAccount.Type.TWITTER.equals(credentials.account_type);
+    private boolean isTwitter(AccountDetails credentials) {
+        return AccountType.TWITTER.equals(credentials.type);
     }
 
     @Override
     protected boolean callback(StatusShortenResult result, ParcelableStatus status) {
         if (result.extra == null) return false;
-        final ParcelableCredentials credentials;
+        final AccountDetails details;
         try {
-            credentials = getOAuthCredentials(status.account_key);
+            details = getOAuthCredentials(status.account_key);
         } catch (SecurityException e) {
             if (BuildConfig.DEBUG) {
                 Log.w(LOGTAG, e);
             }
             return false;
         }
-        final TwitLonger tl = TwitLongerFactory.getInstance(TWITLONGER_API_KEY, credentials);
+        final TwitLonger tl = TwitLongerFactory.getInstance(TWITLONGER_API_KEY, details);
         try {
             tl.updatePost(result.extra, Long.parseLong(status.id));
         } catch (TwitLongerException e) {
@@ -126,16 +126,10 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
     }
 
     @Nullable
-    private ParcelableCredentials getOAuthCredentials(UserKey accountId) {
-        ParcelableCredentials credentials = Twidere.getCredentials(this, accountId);
-        if (credentials == null) return null;
-        switch (credentials.auth_type) {
-            case ParcelableCredentials.AUTH_TYPE_OAUTH:
-            case ParcelableCredentials.AUTH_TYPE_XAUTH: {
-                return credentials;
-            }
-        }
-        return null;
+    private AccountDetails getOAuthCredentials(UserKey accountKey) {
+        Account account = Twidere.findByAccountKey(this, accountKey);
+        if (account == null) return null;
+        return Twidere.getAccountDetails(this, account);
     }
 
 }

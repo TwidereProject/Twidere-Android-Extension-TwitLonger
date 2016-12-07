@@ -21,13 +21,14 @@ package org.mariotaku.twidere.extension.twitlonger;
 
 import android.support.annotation.NonNull;
 
+import com.bluelinelabs.logansquare.Commons_ParameterizedTypeAccessor;
 import com.bluelinelabs.logansquare.JsonMapper;
+import com.bluelinelabs.logansquare.LoganSquare;
 import com.fasterxml.jackson.core.JsonParseException;
 
 import org.mariotaku.restfu.RestConverter;
 import org.mariotaku.restfu.http.HttpResponse;
 import org.mariotaku.restfu.http.mime.Body;
-import org.mariotaku.twidere.util.LoganSquareMapperFinder;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -66,12 +67,7 @@ public class LoganSquareConverterFactory extends RestConverter.SimpleFactory<Twi
         if (converter != null) {
             return converter;
         }
-        final JsonMapper<?> mapper;
-        try {
-            mapper = LoganSquareMapperFinder.mapperFor(type);
-        } catch (LoganSquareMapperFinder.ClassLoaderDeadLockException e) {
-            throw new RestConverter.ConvertException(e);
-        }
+        final JsonMapper<?> mapper = LoganSquare.mapperFor(Commons_ParameterizedTypeAccessor.create(type));
         return new LoganSquareResponseConverter(mapper);
     }
 
@@ -82,12 +78,6 @@ public class LoganSquareConverterFactory extends RestConverter.SimpleFactory<Twi
             return converter;
         }
         return super.forRequest(type);
-    }
-
-    public static class UnsupportedTypeException extends UnsupportedOperationException {
-        public UnsupportedTypeException(Type type) {
-            super("Unsupported type " + type);
-        }
     }
 
     public static class LoganSquareResponseConverter implements RestConverter<HttpResponse, Object, TwitLongerException> {
