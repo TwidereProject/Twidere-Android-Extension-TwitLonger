@@ -49,9 +49,11 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
             }
             NewPost newPost = new NewPost(text);
             if (status.in_reply_to_status != null) {
-                final long inReplyToId = Long.parseLong(status.in_reply_to_status.id);
+                final long inReplyToId = parseLong(status.in_reply_to_status.id);
                 final String inReplyToScreenName = status.in_reply_to_status.user_screen_name;
-                newPost.setInReplyTo(inReplyToId, inReplyToScreenName);
+                if (inReplyToId != -1 && inReplyToScreenName != null) {
+                    newPost.setInReplyTo(inReplyToId, inReplyToScreenName);
+                }
             }
             final Post response = tl.createPost(newPost);
             if (response != null) {
@@ -72,6 +74,15 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
         return AccountType.TWITTER.equals(credentials.type);
     }
 
+    private long parseLong(String str) {
+        if (str == null) return -1;
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     @Override
     protected boolean callback(StatusShortenResult result, ParcelableStatus status) {
         if (result.extra == null) return false;
@@ -85,8 +96,10 @@ public class TwitLongerStatusShortenerService extends StatusShortenerService imp
             return false;
         }
         final TwitLonger tl = TwitLongerFactory.getInstance(TWITLONGER_API_KEY, details);
+        final long statusId = parseLong(status.id);
+        if (statusId == -1) return false;
         try {
-            tl.updatePost(result.extra, Long.parseLong(status.id));
+            tl.updatePost(result.extra, statusId);
         } catch (TwitLongerException e) {
             if (BuildConfig.DEBUG) {
                 Log.w(LOGTAG, e);
